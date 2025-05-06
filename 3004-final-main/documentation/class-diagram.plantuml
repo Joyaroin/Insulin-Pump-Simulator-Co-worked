@@ -1,0 +1,204 @@
+@startuml
+
+skinparam linetype ortho
+
+/'
+To preview and live-edit this class diagram:
+- Install PlantUML vscode extension: https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml
+- Open this in VSCode, press alt+D to open live preview
+'/
+
+class Battery {
+    - int m_charge
+    
+    + int getCharge() const
+    + bool isDead() const
+    + bool isLow() const
+
+    + void setCharge(int newCharge)
+    + void drainBattery(int amount)
+
+    + chargeChanged(int newCharge)
+    + batteryLow()
+    + batteryDead()
+}
+
+class Bolus {
+    - int m_dosePerTimestep
+    - bool m_extendedDose
+    - int m_timeStepsRemaining
+
+    + int dosePerTimestep() const
+    + bool isExtendedDose() const
+    + int timeStepsRemaining() const
+
+    + void setDosePerTimestep(int dose)
+    + void setExtendedDose(bool extended)
+    + void setTimeStepsRemaining(int steps)
+
+    + int getNextBolus()
+    + int timeStepsLeft() const
+
+    + dosePerTimestepChanged(int newDose)
+    + extendedDoseChanged(bool extended)
+    + timeStepsRemainingChanged(int newRemaining)
+}
+
+class Cartridge {
+    - int m_insulinUnits
+    - int m_maxCapacity
+
+    + bool useInsulin(int units)
+    + int getInsulinUnits() const
+    + int getMaxCapacity() const
+    + bool isEmpty() const
+
+    + void setInsulinUnits(int units)
+    + void setMaxCapacity(int capacity)
+
+    + insulinUnitsChanged(int newUnits)
+    + maxCapacityChanged(int newCapacity)
+}
+
+class CGM {
+    - int m_currentReading
+
+    + int getReading() const
+
+    + void measure()
+    + void sendReadingSignal(int)
+
+    + newReading(int bgValue)
+}
+
+CGM --> Person : reads BG from
+
+class Device {
+    - DeviceState m_status
+
+    + void setBattery(Battery* battery)
+    + void setCartridge(Cartridge* cartridge)
+    + void setPump(Pump* pump)
+
+    + DeviceState status() const
+    + void setStatus(DeviceState newState)
+
+    + void deliverInsulin(int units)
+
+    + statusChanged(DeviceState newState)
+}
+
+Device "1" *-- "1" Battery
+Device "1" *-- "1" Cartridge
+Device "1" *-- "1" Pump
+Device "1" *-- "1..2" Bolus
+Device --> CGM : gets BG readings from
+
+class MainWindow {
+
+    + void onPauseButtonReleased()
+    + void onPlayButtonReleased()
+    + void onApplyGlucoseDiffButtonReleased()
+}
+
+MainWindow "1" *-- "1" Simulator
+
+class Person {
+    - float m_bloodGlucoseLevel
+
+    + float bloodGlucoseLevel() const
+
+    + void setBloodGlucoseLevel(float bg)
+    + void eatCarbs(int grams)
+    + void absorbInsulin(int units)
+
+    + bloodGlucoseLevelChanged(float newBG)
+}
+
+class Profile {
+    - string m_name
+    - float m_hourlyInsulinBasalRate
+    - int m_carbRatio
+    - float m_correctionFactor
+    - float m_targetGlucose
+
+    + string name() const
+    + void setName(const string &name)
+
+    + float hourlyInsulinBasalRate() const
+    + void setHourlyInsulinBasalRate(float rate)
+
+    + int carbRatio() const
+    + void setCarbRatio(int ratio)
+
+    + float correctionFactor() const
+    + void setCorrectionFactor(float factor)
+
+    + float targetGlucose() const
+    + void setTargetGlucose(float target)
+
+    + ProfileSegment getSegment(int time) const
+    + void addSegment(int startTime, float hourlyInsulinBasalRate, int carbRatio, float correctionFactor, float targetGlucose)
+    + void removeSegment(int startTime)
+}
+
+Profile "1" *-- "1..6" ProfileSegment
+
+
+class ProfileSegment {
+    - int m_startTime
+    - float m_hourlyInsulinBasalRate
+    - int m_carbRatio
+    - float m_correctionFactor
+    - float m_targetGlucose
+
+    + int startTime() const
+    + float hourlyInsulinBasalRate() const
+    + int carbRatio() const
+    + float correctionFactor() const
+    + float targetGlucose() const
+
+    + void setStartTime(int startTime)
+    + void setHourlyInsulinBasalRate(float rate)
+    + void setCarbRatio(int ratio)
+    + void setCorrectionFactor(float factor)
+    + void setTargetGlucose(float target)
+}
+
+class Pump {
+    - bool m_isOn
+    - int m_flowRate
+
+    + bool isOn() const
+    + int flowRate() const
+
+    + void setOn(bool on)
+    + void setFlowRate(int rate)
+
+    + void on(int rate)
+    + void off()
+
+    + isOnChanged(bool newStatus)
+    + flowRateChanged(int newRate)
+}
+
+class Simulator {
+    - int m_timestep
+    - bool m_isPlaying
+
+    + int timestep() const
+    + bool isPlaying() const
+    + void pause()
+    + void play()
+
+    + void setTimestep(int ts)
+
+    + void processNextTimestep()
+    + void changePersonBloodGlucose(double diff)
+}
+
+Simulator "1" *-- "1" Person
+Simulator "1" *-- "1" Device
+Simulator "1" *-- "1" CGM
+
+@enduml
